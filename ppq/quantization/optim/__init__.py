@@ -11,6 +11,7 @@ from .morph import (ChannelSplitPass, GRUSplitPass, MatrixFactorizationPass,
 from .parameters import ParameterQuantizePass, PassiveParameterQuantizePass
 from .refine import (InplaceQuantizationSettingPass, MishFusionPass,
                      NxpInputRoundingRefinePass, NxpQuantizeFusionPass,
+                     NvpQuantizeCrossLayerSyncPass,
                      PPLCudaAddConvReluMerge, QuantAlignmentPass,
                      QuantizeFusionPass, QuantizeReducePass,
                      QuantizeRefinePass, SwishFusionPass)

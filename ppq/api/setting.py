@@ -410,6 +410,9 @@ class QuantizationSetting():
         self.fusion                          = True
         self.fusion_setting                  = QuantizationFusionSetting()
 
+        # NVP 前后层tensor量化同步
+        self.nvp_cross_layer_sync            = False  
+
         # extension setting 只是一个空白的占位符，用来向你展示如何创建一个自定义的 setting 并传递参数。
         # extension setting shows you how to create a setting and pass parameter to passes.
         # see ppq.quantization.quantizer.base.py
@@ -489,6 +492,16 @@ class QuantizationSettingFactory:
     def trt_setting() -> QuantizationSetting:
         default_setting = QuantizationSetting()
         default_setting.fusion = False # 我也不知道对不对
+        return default_setting
+
+    @staticmethod
+    def nvp_setting() -> QuantizationSetting:
+        default_setting = QuantizationSetting()
+        default_setting.equalization = False
+        default_setting.fusion_setting.fuse_conv_add = False
+        default_setting.fusion_setting.fuse_activation = False
+        default_setting.fusion_setting.align_quantization = False
+        default_setting.nvp_cross_layer_sync = True
         return default_setting
 
     @ staticmethod

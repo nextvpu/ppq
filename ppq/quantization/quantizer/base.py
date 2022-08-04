@@ -312,6 +312,9 @@ class BaseQuantizer(metaclass = ABCMeta):
             list_of_passes.append(ParameterQuantizePass(
                 method=param_setting.calib_algorithm))
 
+        if setting.nvp_cross_layer_sync:
+            list_of_passes.append(NvpQuantizeCrossLayerSyncPass())
+
         if setting.quantize_activation:
             act_setting = setting.quantize_activation_setting
             if act_setting.per_layer_calibration:

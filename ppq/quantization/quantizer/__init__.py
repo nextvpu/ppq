@@ -12,3 +12,4 @@ from .TRTQuantizer import TensorRTQuantizer
 from .FPGAQuantizer import FPGAQuantizer
 from .NCNNQuantizer import NCNNQuantizer
 from .OpenvinoQuantizer import OpenvinoQuantizer
+from .NVPQuantizer import NVP_163_INT8_Quantizer

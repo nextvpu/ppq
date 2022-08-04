@@ -18,6 +18,7 @@ from ppq.quantization.quantizer import (ACADEMIC_INT4_Quantizer,
                                         MetaxChannelwiseQuantizer,
                                         MetaxTensorwiseQuantizer,
                                         NCNNQuantizer, NXP_Quantizer,
+                                        NVP_163_INT8_Quantizer,
                                         OpenvinoQuantizer,
                                         ORT_PerChannelQuantizer,
                                         ORT_PerTensorQuantizer,
@@ -41,6 +42,7 @@ QUANTIZER_COLLECTION = {
     TargetPlatform.TRT_INT8:     TensorRTQuantizer,
     TargetPlatform.NCNN_INT8:    NCNNQuantizer,
     TargetPlatform.NXP_INT8:     NXP_Quantizer,
+    TargetPlatform.NVP_163_INT8: NVP_163_INT8_Quantizer,
     TargetPlatform.ORT_OOS_INT8: ORT_PerTensorQuantizer,
     TargetPlatform.METAX_INT8_C: MetaxChannelwiseQuantizer,
     TargetPlatform.METAX_INT8_T: MetaxTensorwiseQuantizer,
@@ -72,6 +74,7 @@ EXPORTERS = {
     TargetPlatform.ONNX:          OnnxExporter,
     TargetPlatform.ONNXRUNTIME:   ONNXRUNTIMExporter,
     TargetPlatform.OPENVINO_INT8: ONNXRUNTIMExporter,
+    TargetPlatform.NVP_163_INT8:  ONNXRUNTIMExporter,
     TargetPlatform.CAFFE:         CaffeExporter,
     TargetPlatform.NATIVE:        NativeExporter,
     TargetPlatform.EXTENSION:     ExtensionExporter,
@@ -100,6 +103,7 @@ EXPORTING_POSTFIX = {
     TargetPlatform.ORT_OOS_INT8:  '.onnx',
     TargetPlatform.METAX_INT8_C:  '.onnx',
     TargetPlatform.METAX_INT8_T:  '.onnx',
+    TargetPlatform.NVP_163_INT8:  '.onnx',
 }
 
 def load_graph(file_path: str, from_framework: NetworkFramework=NetworkFramework.ONNX, **kwargs) -> BaseGraph:

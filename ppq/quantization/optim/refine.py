@@ -311,6 +311,41 @@ class NxpQuantizeFusionPass(QuantizationOptimizationPass):
                 upstream_cfg.state = QuantizationStates.OVERLAPPED
 
 
+class NvpQuantizeCrossLayerSyncPass(QuantizationOptimizationPass):
+    def __init__(self) -> None:
+        super().__init__(name='NVP Quantization Cross Layer Sync Pass')
+
+    def is_same_platform(self, operations: List[Operation]):
+        platforms = [operation.platform for operation in operations]
+        return all([platform == platforms[0] for platform in platforms])
+
+    @ empty_ppq_cache
+    def optimize(
+        self,
+        processor: GraphCommandProcessor,
+        dataloader: Iterable,
+        executor: BaseGraphExecutor,
+        **kwargs
+    ) -> None:
+        graph = processor.graph
+        processor = SearchableGraph(processor)
+
+        patterns = processor.pattern_matching(
+            patterns=[lambda x: x.type is not None, lambda x: x.type is not None],
+            edges=[[0, 1]], exclusive=True)
+
+        for pattern in patterns:
+            pre_op, post_op = pattern
+            
+            if (isinstance(post_op, QuantableOperation) or
+                not isinstance(pre_op, QuantableOperation)): 
+                continue
+
+            if (len(graph.get_downstream_operations(pre_op)) == 1 and 
+                len(graph.get_upstream_operations(post_op)) == 1):
+                pre_op.config.output_quantization_config[0].state = QuantizationStates.FP32
+
+
 class QuantizeFusionPass(QuantizationOptimizationPass):
     def __init__(self,
                  activation_type: Set[str],
