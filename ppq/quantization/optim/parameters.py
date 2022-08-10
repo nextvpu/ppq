@@ -58,6 +58,9 @@ class PassiveParameterQuantizePass(QuantizationOptimizationPass):
                         f'For op {op.name}, expect Bias shape to be {[bias.numel()]}, '
                         f'however {bias.shape} was given')
                     op.inputs[-1].value = bias.squeeze()
+                    # PATCH 2022.08.02 
+                    if op.inputs[-1].value.ndim == 0 and op.inputs[-1].value.numel() == 1:
+                        op.inputs[-1].value = op.inputs[-1].value.unsqueeze(0)
 
                     # 在两种情况下可以执行后续逻辑，1 状态为 PASSIVE_INIT，2 要求 override
                     if self._override and (b_cfg.state == QuantizationStates.PASSIVE):
