@@ -1,5 +1,5 @@
 
-# How to 
+# How to use
 * Prepare data, please see ./data/README.md
 * Prepare models, please see ./models/README.md
 * All source codes and scripts in ./src
@@ -42,6 +42,7 @@
   ./ProgramEntrance.py  
 
 # Summary  
-  If you follow the above steps correctly, and there is no problem, congratulations, my friend!  
-  If not, please analyze it carefully by yourself!
+  If you follow the above steps correctly and there is no problem, congratulations, my friend!  
+  If not, please analyze it carefully by yourself!  
+  Thanks for PPQ!
 
