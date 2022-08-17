@@ -18,10 +18,10 @@
     You can refer to https://blog.csdn.net/qq_33328642/article/details/122073200  
     We provide this script 'imageNet_val.sh' in ./imgnet/val2012  
     Step as:  
-        - Decompress ILSVRC2012_img_val.tar  
-        - Put images into ./imagenet/val2012  
-        - cd ./imagenet/val2012  
-        - ./imageNet_val.sh  
+    - Decompress ILSVRC2012_img_val.tar  
+    - Put images into ./imagenet/val2012  
+    - cd ./imagenet/val2012  
+    - ./imageNet_val.sh  
 * coco:  COCO2017, val2017.zip  
     download from:  
     We provide this script instances_val2017.json in ./coco/annotations  
