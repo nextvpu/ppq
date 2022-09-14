@@ -1,6 +1,6 @@
 ## 安装
 
-* 安装依赖，请参考[README](https://github.com/nextvpu/ppq/README.md)
+* 安装依赖，请参考[README](https://github.com/nextvpu/ppq/blob/master/README.md)
 
 * 从源码安装PPQ:
 
