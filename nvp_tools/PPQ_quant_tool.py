@@ -199,7 +199,7 @@ def main(args):
     print('Network quantization error calculating ...')
     # 7.collect ppq execution result for validation
     calib_dataloader_num = len(calib_dataloader)
-    executor = TorchExecutor(graph=quantized)
+    executor = TorchExecutor(graph=quantized, device=device)
     num_output = len(quantized.outputs)
     quant_ppq_results = []
     for sample in tqdm(calib_dataloader, desc='PPQ GENERATEING REFERENCES', total=calib_dataloader_num):
