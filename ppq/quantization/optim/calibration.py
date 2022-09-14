@@ -142,9 +142,9 @@ class RuntimeCalibrationPass(QuantizationOptimizationPass):
             'more calibration steps is required, we strongly recommend you to prepare more calibration data '\
             'and more calibration steps is preferred here. (at least 8)'
 
-        assert calib_steps <= 512, 'Calibration steps is too large, ppq is capable for quantizing your network within 8-512 '\
-            'calibration steps. More calibration steps will greatly delay ppq\'s calibration procedure. '\
-            'Reset your calib_steps parameter please.'
+        # assert calib_steps <= 512, 'Calibration steps is too large, ppq is capable for quantizing your network within 8-512 '\
+        #     'calibration steps. More calibration steps will greatly delay ppq\'s calibration procedure. '\
+        #     'Reset your calib_steps parameter please.'
 
         # -------------------------------------------------
         # Override existing quantization configurations
@@ -238,9 +238,9 @@ class PPLDSPTIReCalibrationPass(RuntimeCalibrationPass):
             'more calibration steps is demonded, we strongly recommend you to prepare more calibration data '\
             'and more calibration steps is preferred here. (at least 8)'
 
-        assert calib_steps <= 512, 'Calibration steps is too large, ppq is capable for quantizing your network within 32-128 '\
-            'calibration steps. More calibraiton steps will greatly delay ppq\'s calibration procedure. '\
-            'Reset your calib_steps parameter please.'
+        # assert calib_steps <= 512, 'Calibration steps is too large, ppq is capable for quantizing your network within 32-128 '\
+        #     'calibration steps. More calibraiton steps will greatly delay ppq\'s calibration procedure. '\
+        #     'Reset your calib_steps parameter please.'
 
         hooks = {}
         for operation in tqdm(graph.topological_sort(),
