@@ -20,6 +20,7 @@ def get_calib_dataloader(args):
     calibration = args.calibration
     mean = args.mean
     std = args.std
+    colorformat = args.colorformat
 
     shape_map = dict()
     for i in shape.split(" "):
@@ -64,9 +65,15 @@ def get_calib_dataloader(args):
     img_std = np.array(std_map[tnsr_name]).reshape([1, channel, 1, 1])
     
     if channel == 1:
+        assert colorformat == 'Gray', 'The channel is 1, so the format should be Gray.'
         img_data = [cv2.resize(cv2.imdecode(np.fromfile(_path, dtype=np.uint8), cv2.IMREAD_GRAYSCALE), (tnsr_shape[3], tnsr_shape[2])).reshape(tnsr_shape).astype(np.float32) for _path in path_map[tnsr_name]]
     else:
-        img_data = [cv2.resize(cv2.imdecode(np.fromfile(_path, dtype=np.uint8), cv2.IMREAD_COLOR), (tnsr_shape[3], tnsr_shape[2])).transpose((2,0,1)).reshape(tnsr_shape).astype(np.float32) for _path in path_map[tnsr_name]]
+        if colorformat == 'RGB':
+            img_data = [cv2.resize(cv2.imdecode(np.fromfile(_path, dtype=np.uint8), cv2.IMREAD_COLOR), (tnsr_shape[3], tnsr_shape[2]))[:,:,[2,1,0]].transpose((2,0,1)).reshape(tnsr_shape).astype(np.float32) for _path in path_map[tnsr_name]]
+        elif colorformat == 'BGR':
+            img_data = [cv2.resize(cv2.imdecode(np.fromfile(_path, dtype=np.uint8), cv2.IMREAD_COLOR), (tnsr_shape[3], tnsr_shape[2])).transpose((2,0,1)).reshape(tnsr_shape).astype(np.float32) for _path in path_map[tnsr_name]]
+        else:
+            assert False, 'Invaild color format: {}'.format(colorformat)
     img_data = [((_img-img_mean)/img_std).astype(np.float32) for _img in img_data]
 
     calib_dataloader = [torch.from_numpy(npy_tensor) for npy_tensor in img_data]
@@ -268,6 +275,7 @@ if __name__ == "__main__":
     parser.add_argument('--mean', type=str, required=True, help='Image normalization parameter. The value should be "input0:v0,v1...vn input1:v0,v1...vn"')
     parser.add_argument('--std', type=str, required=True, help='Image normalization parameter. The value should be "input0:v0,v1...vn input1:v0,v1...vn"')
     parser.add_argument('--outdir', type=str, required=True, help='Directory to store output artifacts')
+    parser.add_argument('--colorformat', type=str, required=True, help='Color format, one of Gray/RGB/BGR')
 
     # Optional arguments.
     parser.add_argument('--no-quant-op-types', default=None, nargs='+', help='Specify partial nodes non-quantization by node type.')
