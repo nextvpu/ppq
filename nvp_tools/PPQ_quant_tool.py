@@ -9,6 +9,7 @@ import random
 
 from ppq import *
 from ppq.api import *
+from ppq.parser.caffe import ppl_caffe_pb2
 
 from NVPINT8Quantizer import *
 from NVPINT8Quantizer import nvp_quant_setting
@@ -84,37 +85,55 @@ def get_calib_dataloader(args):
 
 
 def main(args):
-    input = args.input
+    model_type = args.model_type
+    model = args.model
+    proto = args.proto
     outdir = args.outdir
     device = args.device
     layerwise_analyse = args.layerwise_analyse
     finetune = args.finetune
     no_quant_network_output = args.no_quant_network_output
     no_quant_op_types = args.no_quant_op_types 
-
-    assert os.path.exists(input), 'onnx model "{}" file not found.'.format(input)
+    chip_type = args.chip_type 
 
     # 1.initialize dataloader
     input_shape, calib_dataloader = get_calib_dataloader(args)
 
     # 2.initialize quantization setting
     quant_setting = nvp_quant_setting
-    onnx_model = onnx.load(input)
-    wgt_dims = {}
-    for w in onnx_model.graph.initializer:
-        wgt_dims[w.name] = list(w.dims)
+    if model_type == 'onnx':
+        assert os.path.exists(model), 'onnx model "{}" file not found.'.format(model)
+        onnx_model = onnx.load(model)
+        wgt_dims = {}
+        for w in onnx_model.graph.initializer:
+            wgt_dims[w.name] = list(w.dims)
 
-    for node in onnx_model.graph.node:
-        if node.op_type == "Conv":
-            group = [_ for _ in node.attribute if _.name == 'group'][0].i
-            w_name = node.input[1]
-            w_dim = wgt_dims[w_name]
-            # set dwcnv do not quantize.
-            if group == w_dim[0]:
+        for node in onnx_model.graph.node:
+            if node.op_type == "Conv":
+                group = [_ for _ in node.attribute if _.name == 'group'][0].i
+                w_name = node.input[1]
+                w_dim = wgt_dims[w_name]
+                # set dwcnv do not quantize.
+                if group == w_dim[0]:
+                    quant_setting.dispatching_table.append(node.name, TargetPlatform.FP32)
+
+            if no_quant_op_types and node.op_type in no_quant_op_types:
                 quant_setting.dispatching_table.append(node.name, TargetPlatform.FP32)
+    else:
+        assert os.path.exists(model), 'caffe model "{}" file not found.'.format(model)
+        assert os.path.exists(proto), 'caffe prototxt "{}" file not found.'.format(proto)
+        caffe_model = ppl_caffe_pb2.NetParameter()
+        with open(model, 'rb') as f:
+            caffe_model.ParseFromString(f.read())
+        
+        for node in caffe_model.layer:
+            if node.type == 'Convolution':
+                knl_shape = node.blobs[0].shape.dim
+                group = node.convolution_param.group
+                if knl_shape[0] == group:
+                    quant_setting.dispatching_table.append(node.name, TargetPlatform.FP32)
 
-        if no_quant_op_types:
-            if node.op_type in no_quant_op_types:
+            if no_quant_op_types and node.op_type in no_quant_op_types:
                 quant_setting.dispatching_table.append(node.name, TargetPlatform.FP32)
 
     # 3.Use different calibration algorithms to quantize the model and record the best.
@@ -125,16 +144,29 @@ def main(args):
     for calib_algo in [None, 'minmax', 'percentile', 'kl', 'mse', 'isotone']:
         try:
             quant_setting.quantize_activation_setting.calib_algorithm = calib_algo
-            _quantized = quantize_onnx_model(
-                onnx_import_file=input, 
-                calib_dataloader=calib_dataloader,
-                calib_steps=512, 
-                input_shape=input_shape,
-                device=device,
-                setting=quant_setting, 
-                platform=QUANT_PLATFROM,
-                collate_fn=lambda x: x.to(device),
-                verbose=0)
+            if model_type == 'onnx': 
+                _quantized = quantize_onnx_model(
+                    onnx_import_file=model, 
+                    calib_dataloader=calib_dataloader,
+                    calib_steps=512, 
+                    input_shape=input_shape,
+                    device=device,
+                    setting=quant_setting, 
+                    platform=QUANT_PLATFROM,
+                    collate_fn=lambda x: x.to(device),
+                    verbose=0)
+            else:
+                _quantized = quantize_caffe_model(
+                    caffe_model_file=model, 
+                    caffe_proto_file=proto, 
+                    calib_dataloader=calib_dataloader,
+                    calib_steps=512, 
+                    input_shape=input_shape,
+                    device=device,
+                    setting=quant_setting, 
+                    platform=QUANT_PLATFROM,
+                    collate_fn=lambda x: x.to(device),
+                    verbose=0)
         except:
             continue
         reports = graphwise_error_analyse(graph=_quantized, 
@@ -176,16 +208,29 @@ def main(args):
         quant_setting.lsq_optimization_setting.steps = 500
         quant_setting.lsq_optimization_setting.collecting_device = device
     
-    quantized = quantize_onnx_model(
-        onnx_import_file=input, 
-        calib_dataloader=calib_dataloader,
-        calib_steps=len(calib_dataloader), 
-        input_shape=input_shape,
-        device=device,
-        setting=quant_setting, 
-        platform=QUANT_PLATFROM,
-        collate_fn=lambda x: x.to(device),
-        verbose=1)
+    if model_type == 'onnx': 
+        quantized = quantize_onnx_model(
+            onnx_import_file=model, 
+            calib_dataloader=calib_dataloader,
+            calib_steps=len(calib_dataloader), 
+            input_shape=input_shape,
+            device=device,
+            setting=quant_setting, 
+            platform=QUANT_PLATFROM,
+            collate_fn=lambda x: x.to(device),
+            verbose=1)
+    else:
+        quantized = quantize_caffe_model(
+            caffe_model_file=model, 
+            caffe_proto_file=proto, 
+            calib_dataloader=calib_dataloader,
+            calib_steps=len(calib_dataloader), 
+            input_shape=input_shape,
+            device=device,
+            setting=quant_setting, 
+            platform=QUANT_PLATFROM,
+            collate_fn=lambda x: x.to(device),
+            verbose=1)
 
     # 6.final graphwise error analyse
     reports = graphwise_error_analyse(graph=quantized, 
@@ -196,6 +241,8 @@ def main(args):
                             steps=len(calib_dataloader)
                             )
 
+    if model_type != 'onnx': 
+        return
     print('Network quantization error calculating ...')
     # 7.collect ppq execution result for validation
     calib_dataloader_num = len(calib_dataloader)
@@ -207,8 +254,8 @@ def main(args):
         quant_ppq_results.append([ _.cpu().flatten() for _ in result])
 
     # 8.export quantized model.
-    model_name = os.path.basename(input)
-    quant_model_path = os.path.join(outdir, model_name.replace('.onnx', '_int8.onnx'))
+    model_name = os.path.splitext(os.path.basename(model))[0]
+    quant_model_path = os.path.join(outdir, model_name+'_int8.onnx')
     export_ppq_graph(
         graph=quantized, 
         platform=TargetPlatform.ONNXRUNTIME,
@@ -229,13 +276,13 @@ def main(args):
     # record input & output name
     fp32_input_names  = []
     fp32_output_names = []
-    onrt_session = onnxruntime.InferenceSession(input)
+    onrt_session = onnxruntime.InferenceSession(model)
     for iTensor in onrt_session.get_inputs():
         fp32_input_names.append(iTensor.name)
     for oTensor in onrt_session.get_outputs():
         fp32_output_names.append(oTensor.name)
     # run original model with onnxruntime.
-    session = onnxruntime.InferenceSession(input)
+    session = onnxruntime.InferenceSession(model)
     onnxruntime_results = []
     for sample in tqdm(calib_dataloader, desc='ONNXRUNTIME FP32 MODEL GENERATEING OUTPUTS', total=calib_dataloader_num):
         result = session.run(fp32_output_names, {fp32_input_names[0]: convert_any_to_numpy(sample)})
@@ -269,13 +316,16 @@ if __name__ == "__main__":
         description='PPQ quant onnx model tool.')
 
     # Positional arguments.
-    parser.add_argument('--input', type=str, required=True, help='Input ONNX model')
+    parser.add_argument('--model-type', type=str, required=True, choices=['onnx', 'caffe'], help='The type of model, one of onnx/caffe')
+    parser.add_argument('--model', type=str, required=True, help='Input ONNX model/caffemodel')
+    parser.add_argument('--proto', type=str, default=None, help='Input caffe prototxt')
     parser.add_argument('--shape', type=str, required=True, help='Input shape. The value should be "input0:1x3x256x256 input1:1x3x128x128"')
     parser.add_argument('--calibration', type=str, required=True, help='Path to a file specifying the trial inputs. This file should be a plain text file, containing one absolute file path per line. These files will be taken to constitute the trial set. Each path is expected to point to a image. Example: <input_tensor_name>=<input_image_path>')
     parser.add_argument('--mean', type=str, required=True, help='Image normalization parameter. The value should be "input0:v0,v1...vn input1:v0,v1...vn"')
     parser.add_argument('--std', type=str, required=True, help='Image normalization parameter. The value should be "input0:v0,v1...vn input1:v0,v1...vn"')
     parser.add_argument('--outdir', type=str, required=True, help='Directory to store output artifacts')
     parser.add_argument('--colorformat', type=str, required=True, help='Color format, one of Gray/RGB/BGR')
+    parser.add_argument('--chip-type', type=str, required=True, choices=['n16x', 'n161sx'], help='The type of target chip, one of n161sx/n16x.')
 
     # Optional arguments.
     parser.add_argument('--no-quant-op-types', default=None, nargs='+', help='Specify partial nodes non-quantization by node type.')

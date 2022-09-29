@@ -178,7 +178,7 @@ class NVPQuantizer(BaseQuantizer):
         return {}
 
 
-class NVP_161_INT8_Quantizer(NVPQuantizer):
+class NVP_INT8_Quantizer(NVPQuantizer):
     def __init__(
         self, graph: Union[BaseGraph, GraphCommandProcessor]
     ) -> Union[torch.Tensor, list, dict]:
@@ -189,12 +189,12 @@ class NVP_161_INT8_Quantizer(NVPQuantizer):
     def target_platform(self) -> TargetPlatform:
         return TargetPlatform.EXTENSION
 
-register_network_quantizer(NVP_161_INT8_Quantizer, TargetPlatform.EXTENSION)
+register_network_quantizer(NVP_INT8_Quantizer, TargetPlatform.EXTENSION)
 
 nvp_quant_setting = QuantizationSetting()
 nvp_quant_setting.equalization = False
 nvp_quant_setting.fusion_setting.fuse_conv_add = False
 nvp_quant_setting.fusion_setting.fuse_activation = False
-nvp_quant_setting.fusion_setting.align_quantization = False
+nvp_quant_setting.fusion_setting.align_elementwise_to = 'None'
 
 
