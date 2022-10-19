@@ -92,8 +92,8 @@ def main(args):
     device = args.device
     layerwise_analyse = args.layerwise_analyse
     finetune = args.finetune
-    no_quant_network_output = args.no_quant_network_output
-    no_quant_op_types = args.no_quant_op_types 
+    skip_quant_network_output = args.skip_quant_network_output
+    skip_quant_op_types = args.skip_quant_op_types 
     chip_type = args.chip_type 
 
     # 1.initialize dataloader
@@ -117,7 +117,7 @@ def main(args):
                 if group == w_dim[0]:
                     quant_setting.dispatching_table.append(node.name, TargetPlatform.FP32)
 
-            if no_quant_op_types and node.op_type in no_quant_op_types:
+            if skip_quant_op_types and node.op_type in skip_quant_op_types:
                 quant_setting.dispatching_table.append(node.name, TargetPlatform.FP32)
     else:
         assert os.path.exists(model), 'caffe model "{}" file not found.'.format(model)
@@ -133,7 +133,7 @@ def main(args):
                 if knl_shape[0] == group:
                     quant_setting.dispatching_table.append(node.name, TargetPlatform.FP32)
 
-            if no_quant_op_types and node.op_type in no_quant_op_types:
+            if skip_quant_op_types and node.op_type in skip_quant_op_types:
                 quant_setting.dispatching_table.append(node.name, TargetPlatform.FP32)
 
     # 3.Use different calibration algorithms to quantize the model and record the best.
@@ -328,8 +328,8 @@ if __name__ == "__main__":
     parser.add_argument('--chip-type', type=str, required=True, choices=['n16x', 'n161sx'], help='The type of target chip, one of n161sx/n16x.')
 
     # Optional arguments.
-    parser.add_argument('--no-quant-op-types', default=None, nargs='+', help='Specify partial nodes non-quantization by node type.')
-    parser.add_argument('--no-quant-network-output', action='store_true', default=None, help='Whether to quantify the output of the network.')
+    parser.add_argument('--skip-quant-op-types', default=None, nargs='+', help='Specify partial nodes non-quantization by node type.')
+    parser.add_argument('--skip-quant-network-output', action='store_true', default=None, help='Whether to quantify the output of the network.')
     parser.add_argument('--device', default='cpu', choices=['cpu', 'cuda'],
         help='Use GPU to accelerate the quantization if the GPU environment has been properly setups')
     parser.add_argument('--layerwise_analyse', action='store_true', default=None,
