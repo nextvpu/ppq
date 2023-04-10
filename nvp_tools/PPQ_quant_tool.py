@@ -114,7 +114,7 @@ def main(args):
                 w_name = node.input[1]
                 w_dim = wgt_dims[w_name]
                 # set dwcnv do not quantize.
-                if group == w_dim[0]:
+                if group == w_dim[0] and group != 1 and w_dim[1] == 1:
                     quant_setting.dispatching_table.append(node.name, TargetPlatform.FP32)
 
             if skip_quant_op_types and node.op_type in skip_quant_op_types:
