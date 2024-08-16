@@ -6,7 +6,7 @@ from .default import (DEFAULT_BACKEND_TABLE, AveragePool_forward, AdaptiveAvgPoo
                       Gather_forward, GatherND_forward, Gemm_forward,
                       Greater_forward, MaxPool2d_forward, _NMS_forward,
                       NonZero_forward, Range_forward, ReduceL2_forward,
-                      ReduceMax_forward, Reshape_forward, Resize_forward,
+                      ReduceMax_forward, ReduceMin_forward, Reshape_forward, Resize_forward,
                       ScatterElements_forward, ScatterND_forward,
                       Shape_forward, Slice_forward, Softmax_forward,
                       Squeeze_forward, Tile_forward, TopK_forward,

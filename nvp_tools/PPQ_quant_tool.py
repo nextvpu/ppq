@@ -142,6 +142,8 @@ def main(args):
     quantized = None 
     min_error = None
     for calib_algo in [None, 'minmax', 'percentile', 'kl', 'mse', 'isotone']:
+    # for calib_algo in ['kl']:
+    # for calib_algo in [None, 'minmax', 'percentile', 'kl', 'mse']:
         try:
             quant_setting.quantize_activation_setting.calib_algorithm = calib_algo
             if model_type == 'onnx': 
@@ -149,6 +151,7 @@ def main(args):
                     onnx_import_file=model, 
                     calib_dataloader=calib_dataloader,
                     calib_steps=512, 
+                    # calib_steps=10, 
                     input_shape=input_shape,
                     device=device,
                     setting=quant_setting, 
@@ -337,6 +340,28 @@ if __name__ == "__main__":
     parser.add_argument('--finetune', action='store_true', default=None,
         help='Initiate network retraining process to reduce quantization error')
     args = parser.parse_args()
+
+    # args.model_type = "onnx"  # 模型类型，caffe,ncnn,onnx
+    # args.model = r"D:\NextVPU_Self\Deep_Learning\relevant_algorithm\model\det\yolov3\end2end_Conv_0_Conv_169_Conv_172_Conv_175.onnx"  # ./sample/test_case.onnx  需要量化的模型地址
+    # args.shape = "input:1x3x416x608"  # data:1x1x112x112  模型的输入shape大小
+    # args.calibration  = "D:\\NextVPU_Self\\Deep_Learning\\relevant_algorithm\\deploy\\mmdeploy-main\\imagenet-sample-images\\coco\\imagelist.txt"  # ./sample/calib.txt  量化的图片地址，做成文本的形式
+    # args.mean  = "input:0,0,0"  # data:128  均值
+    # args.std = "input:255,255,255"  # data:128  方差
+    # args.colorformat = "RGB"  # Gray  单通道或者RGB,BGR
+    # args.outdir = R"D:\NextVPU_Self\Deep_Learning\relevant_algorithm\model\det\yolov3"  # ./sample 输出量化后模型的地址
+    # args.device = "cpu"  # cuda  用cuda还是cpu，cuda速度是cpu的20倍
+    # args.chip_type = "n16x"  # n16x nh或者jg，n16x或者n161sx
+
+    # args.model_type = "onnx"  # 模型类型，caffe,ncnn,onnx
+    # args.model = r"D:\NextVPU_Self\PPQ\models\depth_model_640_320\depth_model_640_320\AdelaiDepth_resnet50_640x192.onnx"  # ./sample/test_case.onnx  需要量化的模型地址
+    # args.shape = "input0:1x3x192x640"  # data:1x1x112x112  模型的输入shape大小
+    # args.calibration  = r"D:\NextVPU_Self\PPQ\models\depth_model_640_320\depth_model_640_320\list.txt"  # ./sample/calib.txt  量化的图片地址，做成文本的形式
+    # args.mean  = "input0:123.675,118.575,103.53"  # data:128  均值  # "input0:0.485,0.456,0.406"  # data:128  均值
+    # args.std = "input0:58.395,57.12,57.375"  # data:128  方差
+    # args.colorformat = "RGB"  # Gray  单通道或者RGB,BGR
+    # args.outdir = r"D:\NextVPU_Self\PPQ\models\depth_model_640_320\depth_model_640_320"  # ./sample 输出量化后模型的地址
+    # args.device = "cpu"  # cuda  用cuda还是cpu，cuda速度是cpu的20倍
+    # args.chip_type = "n16x"  # n16x nh或者jg，n16x或者n161sx
 
     if args.device=='cuda':
         with ENABLE_CUDA_KERNEL():

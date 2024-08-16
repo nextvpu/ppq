@@ -1184,6 +1184,57 @@ def ReduceMax_forward(op: Operation, values: List[torch.Tensor], ctx: TorchBacke
     if keepdims == False: return torch.squeeze(data)
     return data
 
+def ReduceMin_forward(op: Operation, values: List[torch.Tensor], ctx: TorchBackendContext = None, **kwargs) -> torch.Tensor:
+    """Computes the max of the input tensor's element along the provided axes.
+    The resulted tensor has the same rank as the input if keepdims equal 1. If
+    keepdims equal 0, then the resulted tensor have the reduced dimension
+    pruned.
+
+    The above behavior is similar to numpy,
+    with the exception that numpy default keepdims to False instead of True.
+
+    Attributes
+        axes : list of ints
+            A list of integers, along which to reduce.
+            The default is to reduce over all the dimensions of the input tensor.
+            Accepted range is [-r, r-1] where r = rank(data).
+
+        keepdims : int (default is 1)
+            Keep the reduced dimension or not, default 1 mean keep reduced dimension.
+
+    Inputs
+        data : T
+            An input tensor.
+
+    Outputs
+        reduced : T
+            Reduced output tensor.
+
+    Args:
+        op (Operation): [description]
+        values (List[torch.Tensor]): [description]
+
+    Returns:
+        [type]: [description]
+    """
+    ASSERT_ALL_TENSORS_AT_CPU(op=op, values=values)
+    ASSERT_NUM_OF_INPUT(op=op, values=values, min_num_of_input=1, max_num_of_input=1)
+    axes = GET_ATTRIBUTE_FROM_OPERATION(op=op, attribute='axes', default=None)
+    keepdims = GET_ATTRIBUTE_FROM_OPERATION(op=op, attribute='keepdim', default=1)
+    [data], keepdims = values, bool(keepdims)
+
+    if data.numel() == 0: return data
+    if axes is None:
+        # The default is to reduce over all the dimensions of the input tensor
+        reduced = data.min()
+        if keepdims: reduced = reduced.reshape([1] * data.dim())
+        return reduced
+
+    for axis in axes:
+        data = torch.min(data, keepdim=True, dim=axis)
+    if keepdims == False: return torch.squeeze(data)
+    return data
+
 def Sqrt_forward(op: Operation, values: List[torch.Tensor], ctx: TorchBackendContext = None, **kwargs) -> torch.Tensor:
     """
     Square root takes one input data (Tensor) and produces one output data (Tensor)
@@ -1723,6 +1774,7 @@ SOI_BACKEND_TABLE = {
     'ScatterND': ScatterND_forward,
     'TopK': TopK_forward,
     'ReduceMax': ReduceMax_forward,
+    'ReduceMin': ReduceMin_forward,
     'Sqrt': Sqrt_forward,
     'Log': Log_forward,
     'Floor': Floor_forward,
